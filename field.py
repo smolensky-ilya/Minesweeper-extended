@@ -24,6 +24,7 @@ grid = [[random.choice([0, 1, 'B']) for _ in range(GRID_SIZE)] for _ in range(GR
 
 print(grid)
 
+
 def draw_grid():
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
