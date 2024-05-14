@@ -30,6 +30,7 @@ class Game:
         pygame.display.set_caption('SMK: Minesweeper')
         self.font = pygame.font.Font(None, 24)  # INIT THE FOND - AFTER PYGAME ITSELF
         self.first_click = True
+        self.menu_text = self.change_menu_text()
 
         # BUTTON INIT (SIZE and POSITIONS)
         self.menu_button = pygame.Rect(10, 5, 100, 30)
@@ -57,17 +58,20 @@ class Game:
                                 #print('FIRST CLICK - RECREATING')
                                 self.obtain_a_new_field()
                             self.first_click = False  # It's no longer the first click!
-                            self.field_object.open_tile(x=field_x, y=field_y)
+                            if not self.field[field_y][field_x].is_flagged:  # If not flagged - OPEN
+                                self.field_object.open_tile(x=field_x, y=field_y)
                             if self.check_if_we_click_on_a_bomb(field_x, field_y):
                                 self.game_over()
-                                #print('BOOOOM!')
+                            else:
+                                self.change_menu_text()  # updating the number of remaining tiles to open
                             self.first_click = False
                         elif event.button == 3:  # RIGHT MOUSE BUTTON
                             #print('RMB')
                             self.field[field_y][field_x].get_flagged()
-
+                if self.field_object.count_remaining_tiles() <= 0:  # checking the winning condition
+                    self.change_menu_text(won=True)
             screen.fill(self.WHITE)
-            self.draw_menu(screen)
+            self.draw_menu(screen, menu_text=self.menu_text)
             self.draw_the_field(screen)
             pygame.display.flip()  # this updates the window as I see. Nothing works w/o it.
 
@@ -106,7 +110,7 @@ class Game:
         self.field = self.field_object.get()
         self.first_click = True
 
-    def draw_menu(self, screen):
+    def draw_menu(self, screen, menu_text):
         # Draw the menu background
         pygame.draw.rect(screen, self.DARK_GRAY, [0, 0, self.window_width, self.menu_height])
 
@@ -131,9 +135,18 @@ class Game:
         screen.blit(text, text_rect)
 
         # Add other text, e.g., number of mines
-        #mine_text = f"Mines: asdasd"
-        #mine_surf = font.render(mine_text, True, self.WHITE)
-        #screen.blit(mine_surf, (120, 10))
+        mine_surf = font.render(menu_text, True, self.WHITE)
+        screen.blit(mine_surf, (260, 12))
+
+    def change_menu_text(self, won=False, lost=False):
+        if won:
+            self.menu_text = f"Amazing job!"
+        elif lost:
+            self.menu_text = f"Better luck next time! :("
+        else:
+            self.menu_text = f"Good luck! Mines: {self.max_bombs}. Left: {self.field_object.count_remaining_tiles()}"
+
+        return self.menu_text
 
     def check_if_we_click_on_a_bomb(self, x, y):
         if self.field[y][x].if_bomb:
@@ -145,6 +158,7 @@ class Game:
         if self.menu_button.collidepoint(pos):
             print('Clicked New Game')
             self.obtain_a_new_field()
+            self.change_menu_text()
         elif self.another_button.collidepoint(pos):
             print('Another button')
         else:
@@ -152,6 +166,7 @@ class Game:
 
     def game_over(self):
         self.field_object.open_all_tiles()
+        self.change_menu_text(lost=True)
 
 
 class Field:
@@ -165,6 +180,11 @@ class Field:
             self.field = [tiles[i:i+dimensions] for i in range(0, len(tiles), dimensions)]
         else:
             self.field = [[self.Tile(if_bomb=True) for _ in range(dimensions)] for _ in range(dimensions)]
+
+        self.max_bombs = max_bombs
+        self.total_tiles = dimensions * dimensions
+        self.safe_tiles = self.total_tiles - max_bombs
+        self.opened_tiles = 0
 
     def get(self):
         changed_field = self.field
@@ -191,6 +211,7 @@ class Field:
         if tile.if_open or tile.if_bomb:
             return
         tile.open_tile()
+        self.opened_tiles += 1
         if tile.is_totally_empty():  # checking and opening adjacent
             for i in range(-1, 2):
                 for j in range(-1, 2):
@@ -201,6 +222,9 @@ class Field:
         for row in self.field:
             for tile in row:
                 tile.if_open = True
+
+    def count_remaining_tiles(self):
+        return self.total_tiles - self.opened_tiles - self.max_bombs
 
     def __str__(self):
         return str(self.field)
