@@ -1,5 +1,6 @@
 import random
 import pygame
+from time import sleep
 
 
 class Game:
@@ -59,7 +60,8 @@ class Game:
                                 self.obtain_a_new_field()
                             self.first_click = False  # It's no longer the first click!
                             if not self.field[field_y][field_x].is_flagged:  # If not flagged - OPEN
-                                self.field_object.open_tile(x=field_x, y=field_y)
+                                self.field_object.open_tile(x=field_x, y=field_y, draw_object=self.draw_the_field,
+                                                            screen=screen)
                             if self.check_if_we_click_on_a_bomb(field_x, field_y):
                                 self.game_over()
                             else:
@@ -204,19 +206,25 @@ class Field:
                         counted_bombs += 1
         return counted_bombs
 
-    def open_tile(self, x, y):
+    def open_tile(self, x, y, draw_object, screen):
         if not (0 <= x < self.dimensions and 0 <= y < self.dimensions):
             return  # the empty RETURN is a must here. It stops the execution of recursion.
         tile = self.field[y][x]
         if tile.if_open or tile.if_bomb:
             return
         tile.open_tile()
+
+        sleep(0.0000001)
+        draw_object(screen)
+
+        pygame.display.update()
+
         self.opened_tiles += 1
         if tile.is_totally_empty():  # checking and opening adjacent
             for i in range(-1, 2):
                 for j in range(-1, 2):
                     if j != 0 or i != 0:
-                        self.open_tile(x + i, y + j)
+                        self.open_tile(x + i, y + j, draw_object, screen)
 
     def open_all_tiles(self):
         for row in self.field:
@@ -259,7 +267,7 @@ class Field:
 def main():
     dim = 20
     bombs = 50
-    Game(max_bombs=bombs, dimensions=dim, cell_size_pix=30)
+    Game(max_bombs=bombs, dimensions=dim, cell_size_pix=25)
 
 
 if __name__ == "__main__":
