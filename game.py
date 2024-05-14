@@ -48,6 +48,8 @@ class Game:
                     else:
                         field_x, field_y = x // self.cell_size, (y-self.menu_height) // self.cell_size
                         print(f"Clicked: {field_x}, {field_y}")
+                        self.field[field_y][field_x].open_tile()
+
                         if self.check_if_we_click_on_a_bomb(field_x, field_y):
                             print('BOOOOM!')
 
@@ -61,15 +63,30 @@ class Game:
             for x in range(self.dimensions):
                 rect_y = y * self.cell_size + self.menu_height
                 rect = pygame.Rect(x * self.cell_size, rect_y, self.cell_size, self.cell_size)
-                pygame.draw.rect(screen, self.GRAY, rect, 1)
+
                 each_cell = self.field[y][x]
+                if each_cell.if_open:
+                    if each_cell.if_bomb:
+                        background_color = 'red'
+                    else:
+                        background_color = self.WHITE
 
-                cell_text = each_cell.string if each_cell.if_bomb else each_cell.bombs_around \
-                    if each_cell.bombs_around > 0 else ""
+                    pygame.draw.rect(screen, background_color, rect)  # Fill the cell with the background color
+                    cell_text = each_cell.string if each_cell.if_bomb else each_cell.bombs_around \
+                        if each_cell.bombs_around > 0 else ""
+                else:
+                    # Closed cells are dark gray
+                    pygame.draw.rect(screen, self.GRAY, rect)
+                    cell_text = ''
 
-                text = self.font.render(str(cell_text), True, self.BLACK)
-                text_rect = text.get_rect(center=rect.center)
-                screen.blit(text, text_rect)
+                # Draw a black border for all cells
+                pygame.draw.rect(screen, self.BLACK, rect, 1)  # 1 pixel border
+
+                # Render the text for each cell
+                if cell_text != '':  # Only render text if there's something to display
+                    text = self.font.render(str(cell_text), True, self.BLACK)
+                    text_rect = text.get_rect(center=rect.center)
+                    screen.blit(text, text_rect)
 
     def obtain_a_new_field(self):
         self.field = Field(max_bombs=self.max_bombs, dimensions=self.dimensions).get()
@@ -160,6 +177,10 @@ class Field:
             self.bombs_around = 0
             self.if_bomb = if_bomb
             self.string = '*B*'
+            self.if_open = False
+
+        def open_tile(self):
+            self.if_open = True
 
         def __str__(self):
             return self.string if self.if_bomb else str(self.bombs_around)
