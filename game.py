@@ -49,21 +49,22 @@ class Game:
                         self.menu_button_clicks(event.pos)
                     else:
                         field_x, field_y = x // self.cell_size, (y-self.menu_height) // self.cell_size
-                        #print(f"Clicked: {field_x}, {field_y}")
+                        if event.button == 1:  # LEFT MOUSE BUTTON
+                            #print(f"Clicked: {field_x}, {field_y}")
 
-                        # Saving ourselves on the first click - it will recreate the field until safe.
-                        while self.first_click and self.field[field_y][field_x].if_bomb:
-                            #print('FIRST CLICK - RECREATING')
-                            self.obtain_a_new_field()
-                        self.first_click = False  # It's no longer the first click!
-                        self.field_object.open_tile(x=field_x, y=field_y)
-                        if self.check_if_we_click_on_a_bomb(field_x, field_y):
-                            self.game_over()
-                            #print('BOOOOM!')
-
-
-                        self.first_click = False
-
+                            # Saving ourselves on the first click - it will recreate the field until safe.
+                            while self.first_click and self.field[field_y][field_x].if_bomb:
+                                #print('FIRST CLICK - RECREATING')
+                                self.obtain_a_new_field()
+                            self.first_click = False  # It's no longer the first click!
+                            self.field_object.open_tile(x=field_x, y=field_y)
+                            if self.check_if_we_click_on_a_bomb(field_x, field_y):
+                                self.game_over()
+                                #print('BOOOOM!')
+                            self.first_click = False
+                        elif event.button == 3:  # RIGHT MOUSE BUTTON
+                            #print('RMB')
+                            self.field[field_y][field_x].get_flagged()
 
             screen.fill(self.WHITE)
             self.draw_menu(screen)
@@ -89,7 +90,7 @@ class Game:
                 else:
                     # Closed cells are dark gray
                     pygame.draw.rect(screen, self.GRAY, rect)
-                    cell_text = ''
+                    cell_text = '' if not each_cell.is_flagged else '*'
 
                 # Draw a black border for all cells
                 pygame.draw.rect(screen, self.BLACK, rect, 1)  # 1 pixel border
@@ -213,12 +214,16 @@ class Field:
             self.if_bomb = if_bomb
             self.string = '*B*'
             self.if_open = False
+            self.is_flagged = False
 
         def is_totally_empty(self):
             return not self.if_bomb and self.bombs_around == 0
 
         def open_tile(self):
             self.if_open = True
+
+        def get_flagged(self):
+            self.is_flagged = True if self.is_flagged is False else False
 
         def __str__(self):
             return self.string if self.if_bomb else str(self.bombs_around)
@@ -228,8 +233,8 @@ class Field:
 
 
 def main():
-    dim = 10
-    bombs = 99
+    dim = 20
+    bombs = 50
     Game(max_bombs=bombs, dimensions=dim, cell_size_pix=30)
 
 
