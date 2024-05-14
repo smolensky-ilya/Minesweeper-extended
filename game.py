@@ -3,9 +3,9 @@ import pygame
 
 
 class Game:
-    def __init__(self, max_bombs, dimensions):
+    def __init__(self, max_bombs, dimensions, cell_size_pix=50):
         # PARAMS
-        self.cell_size = 50
+        self.cell_size = cell_size_pix
         self.menu_height = 40
 
         self.dimensions = dimensions
@@ -20,6 +20,7 @@ class Game:
         self.DARK_GRAY = (60, 60, 60)
 
         # GETTING THE FIELD
+        self.field_object = None
         self.field = None
         self.obtain_a_new_field()
 
@@ -28,6 +29,7 @@ class Game:
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('SMK: Minesweeper')
         self.font = pygame.font.Font(None, 24)  # INIT THE FOND - AFTER PYGAME ITSELF
+        self.first_click = True
 
         # BUTTON INIT (SIZE and POSITIONS)
         self.menu_button = pygame.Rect(10, 5, 100, 30)
@@ -47,11 +49,21 @@ class Game:
                         self.menu_button_clicks(event.pos)
                     else:
                         field_x, field_y = x // self.cell_size, (y-self.menu_height) // self.cell_size
-                        print(f"Clicked: {field_x}, {field_y}")
-                        self.field[field_y][field_x].open_tile()
+                        #print(f"Clicked: {field_x}, {field_y}")
 
+                        # Saving ourselves on the first click - it will recreate the field until safe.
+                        while self.first_click and self.field[field_y][field_x].if_bomb:
+                            #print('FIRST CLICK - RECREATING')
+                            self.obtain_a_new_field()
+                        self.first_click = False  # It's no longer the first click!
+                        self.field_object.open_tile(x=field_x, y=field_y)
                         if self.check_if_we_click_on_a_bomb(field_x, field_y):
-                            print('BOOOOM!')
+                            self.game_over()
+                            #print('BOOOOM!')
+
+
+                        self.first_click = False
+
 
             screen.fill(self.WHITE)
             self.draw_menu(screen)
@@ -89,7 +101,9 @@ class Game:
                     screen.blit(text, text_rect)
 
     def obtain_a_new_field(self):
-        self.field = Field(max_bombs=self.max_bombs, dimensions=self.dimensions).get()
+        self.field_object = Field(max_bombs=self.max_bombs, dimensions=self.dimensions)
+        self.field = self.field_object.get()
+        self.first_click = True
 
     def draw_menu(self, screen):
         # Draw the menu background
@@ -135,6 +149,9 @@ class Game:
         else:
             print('Missed all buttons')
 
+    def game_over(self):
+        self.field_object.open_all_tiles()
+
 
 class Field:
     def __init__(self, max_bombs, dimensions):
@@ -166,6 +183,24 @@ class Field:
                         counted_bombs += 1
         return counted_bombs
 
+    def open_tile(self, x, y):
+        if not (0 <= x < self.dimensions and 0 <= y < self.dimensions):
+            return  # the empty RETURN is a must here. It stops the execution of recursion.
+        tile = self.field[y][x]
+        if tile.if_open or tile.if_bomb:
+            return
+        tile.open_tile()
+        if tile.is_totally_empty():  # checking and opening adjacent
+            for i in range(-1, 2):
+                for j in range(-1, 2):
+                    if j != 0 or i != 0:
+                        self.open_tile(x + i, y + j)
+
+    def open_all_tiles(self):
+        for row in self.field:
+            for tile in row:
+                tile.if_open = True
+
     def __str__(self):
         return str(self.field)
 
@@ -179,6 +214,9 @@ class Field:
             self.string = '*B*'
             self.if_open = False
 
+        def is_totally_empty(self):
+            return not self.if_bomb and self.bombs_around == 0
+
         def open_tile(self):
             self.if_open = True
 
@@ -191,8 +229,8 @@ class Field:
 
 def main():
     dim = 10
-    bombs = 15
-    Game(max_bombs=bombs, dimensions=dim)
+    bombs = 99
+    Game(max_bombs=bombs, dimensions=dim, cell_size_pix=30)
 
 
 if __name__ == "__main__":
