@@ -20,7 +20,8 @@ class Game:
         self.DARK_GRAY = (60, 60, 60)
 
         # GETTING THE FIELD
-        self.field = Field(max_bombs=self.max_bombs, dimensions=self.dimensions).get()
+        self.field = None
+        self.obtain_a_new_field()
 
         # INIT
         pygame.init()
@@ -70,6 +71,9 @@ class Game:
                 text_rect = text.get_rect(center=rect.center)
                 screen.blit(text, text_rect)
 
+    def obtain_a_new_field(self):
+        self.field = Field(max_bombs=self.max_bombs, dimensions=self.dimensions).get()
+
     def draw_menu(self, screen):
         # Draw the menu background
         pygame.draw.rect(screen, self.DARK_GRAY, [0, 0, self.window_width, self.menu_height])
@@ -108,6 +112,7 @@ class Game:
     def menu_button_clicks(self, pos):
         if self.menu_button.collidepoint(pos):
             print('Clicked New Game')
+            self.obtain_a_new_field()
         elif self.another_button.collidepoint(pos):
             print('Another button')
         else:
