@@ -34,6 +34,8 @@ class Game:
 
         # GAME FEATURES
         self.player_inventory, self.player_immortality = self.initiate_game_features()
+        self.player_inventory = ['Imm', 'RnB', 'TBD'] #TEMP!!!
+        self.inventory_buttons = {}
 
         # BUTTON INIT (SIZE and POSITIONS)
         self.menu_button = pygame.Rect(10, 5, 100, 30)
@@ -130,8 +132,7 @@ class Game:
         pygame.draw.rect(screen, self.GRAY, button_rect)
 
         # Add text to the button
-        font = pygame.font.Font(None, 24)
-        text = font.render("New Game", True, self.BLACK)
+        text = self.font.render("New Game", True, self.BLACK)
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
 
@@ -140,14 +141,25 @@ class Game:
         pygame.draw.rect(screen, self.GRAY, button_rect)
 
         # Add text to the button
-        font = pygame.font.Font(None, 24)
-        text = font.render("Another button", True, self.BLACK)
+        text = self.font.render("Another button", True, self.BLACK)
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
 
         # Add other text, e.g., number of mines
-        mine_surf = font.render(menu_text, True, self.WHITE)
+        mine_surf = self.font.render(menu_text, True, self.WHITE)
         screen.blit(mine_surf, (260, 12))
+
+        # DRAWING INVENTORY ITEMS!!!!!!!
+        y_coord = 520
+        for item in self.player_inventory:
+            #adding their coords to the dict for functional reference in another func
+            self.inventory_buttons[item] = pygame.Rect(y_coord, 10, len(item) * 12, 20)
+
+            pygame.draw.rect(screen, self.GRAY, self.inventory_buttons[item])
+            text = self.font.render(item, True, self.BLACK)
+            text_rect = text.get_rect(center=self.inventory_buttons[item].center)
+            screen.blit(text, text_rect)
+            y_coord += (len(item) * 8) + 20
 
     def change_menu_text(self, won=False, lost=False):
         if won:
@@ -166,6 +178,12 @@ class Game:
             return False
 
     def menu_button_clicks(self, pos):
+        # checking if inventory was used
+        for item, button_rect in self.inventory_buttons.items():
+            if button_rect.collidepoint(pos):
+                print(f'Clicked {item}')
+                return
+        # other buttons
         if self.menu_button.collidepoint(pos):
             print('Clicked New Game')
             self.obtain_a_new_field()
