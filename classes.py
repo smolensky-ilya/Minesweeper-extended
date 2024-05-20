@@ -4,16 +4,21 @@ from time import sleep
 
 
 class Field:
-    def __init__(self, max_bombs, dimensions):
+    def __init__(self, max_bombs, dimensions, possible_inventory_items):
         self.dimensions = dimensions
 
         if max_bombs <= dimensions * dimensions:
-            tiles = [self.Tile(if_bomb=False) for _ in range((dimensions*dimensions) - max_bombs)] + \
-                    [self.Tile(if_bomb=True) for _ in range(max_bombs)]
+            tiles = [self.Tile(if_bomb=False,
+                               possible_inventory_items=possible_inventory_items)
+                     for _ in range((dimensions*dimensions) - max_bombs)] + \
+                    [self.Tile(if_bomb=True,
+                               possible_inventory_items=possible_inventory_items) for _ in range(max_bombs)]
             random.shuffle(tiles)
             self.field = [tiles[i:i+dimensions] for i in range(0, len(tiles), dimensions)]
         else:
-            self.field = [[self.Tile(if_bomb=True) for _ in range(dimensions)] for _ in range(dimensions)]
+            self.field = [[self.Tile(if_bomb=True,
+                                     possible_inventory_items=possible_inventory_items)
+                           for _ in range(dimensions)] for _ in range(dimensions)]
 
         self.max_bombs = max_bombs
         self.total_tiles = dimensions * dimensions
@@ -26,6 +31,7 @@ class Field:
             for x in range(self.dimensions):
                 if not changed_field[y][x].if_bomb:
                     changed_field[y][x].bombs_around = self.count_bombs_around(x, y)
+                    changed_field[y][x].generate_an_item()  # item generation
         return changed_field
 
     def count_bombs_around(self, x, y):
@@ -47,7 +53,7 @@ class Field:
             return
         tile.open_tile()
         # beautifully updating display
-        sleep(0.0000001)
+        #sleep(0.0000001)
         draw_object(screen)
         pygame.display.update()
 
@@ -73,12 +79,15 @@ class Field:
         return str(self.field)
 
     class Tile:
-        def __init__(self, if_bomb):
+        def __init__(self, if_bomb, possible_inventory_items):
             self.bombs_around = 0
             self.if_bomb = if_bomb
-            self.string = '*B*'
+            self.bomb_string = '*B*'
             self.if_open = False
             self.is_flagged = False
+            self.possible_inventory_items = possible_inventory_items
+            self.item = None
+            self.item_taken = False
 
         def is_totally_empty(self):
             return not self.if_bomb and self.bombs_around == 0
@@ -89,93 +98,19 @@ class Field:
         def get_flagged(self):
             self.is_flagged = True if self.is_flagged is False else False
 
-        def __str__(self):
-            return self.string if self.if_bomb else str(self.bombs_around)
-
-        def __repr__(self):
-            return self.string if self.if_bomb else str(self.bombs_around)
-
-
-class Inventory:
-    def __init__(self):
-        self.things_in_the_inventory = []
-
-    def add_to_inventory(self, item):
-        present = False
-        for i in self.things_in_the_inventory:
-            if type(i) == type(item):
-                print("it's there")
-                i.quantity += 1
-                present = True
-        if not present:
-            print("it's not there")
-            item.quantity += 1
-            self.things_in_the_inventory.append(item)
-
-    def remove_from_inventory(self, item):
-        print('removing it')
-        for index, i in enumerate(self.things_in_the_inventory):
-            if type(i) == type(item):
-                del self.things_in_the_inventory[index]
-
-    def use_an_item(self, item):
-        for i in self.things_in_the_inventory:
-            if type(i) == type(item):
-                i.use()
-                if i.quantity <= 0:
-                    self.remove_from_inventory(i)
-                return True
-        return False  # if it's not our there
-
-    def __repr__(self):
-        return str([str(item) + " x" + str(item.quantity) for item in self.things_in_the_inventory])
-
-    def __str__(self):
-        return str([str(item) + " x" + str(item.quantity) for item in self.things_in_the_inventory])
-
-
-class Items:
-    class DefaultClass:
-        def __init__(self, name: str):
-            self.quantity = 0
-            self.name = name
-
-        def use(self):
-            self.quantity -= 1
-
-        def __repr__(self):
-            return self.name
+        def generate_an_item(self):
+            if not self.if_bomb and self.bombs_around == 0:
+                for item, probability in self.possible_inventory_items.items():  # adding items with certain probability
+                    if self.item is not None:
+                        break
+                    self.item = item if random.random() < probability else None
 
         def __str__(self):
-            return self.name
+            return self.bomb_string if self.if_bomb else str(self.bombs_around)
 
-    class NextStepImmortality(DefaultClass):
-        """
-        Make the player immortal on the next opened tile.
-        """
-        def __init__(self):
-            super().__init__(name='Imm')
-
-
-def main():
-    test_inventory = Inventory()
-    # adding
-    test_inventory.add_to_inventory(Items.NextStepImmortality())
-    # adding one more
-    test_inventory.add_to_inventory(Items.NextStepImmortality())
-    # view inventory
-    print(test_inventory)
-    # using
-    test_inventory.use_an_item(Items.NextStepImmortality())
-    # view inventory
-    print(test_inventory)
-    # using
-    print(test_inventory.use_an_item(Items.NextStepImmortality()))
-    # view inventory
-    print(test_inventory)
-    # using
-    print(test_inventory.use_an_item(Items.NextStepImmortality()))
+        def __repr__(self):
+            return self.bomb_string if self.if_bomb else str(self.bombs_around)
 
 
 if __name__ == '__main__':
-    main()
+    pass
