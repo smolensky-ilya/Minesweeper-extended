@@ -1,11 +1,10 @@
 import pygame
 import random
-from time import sleep
 
 
 class Field:
-    def __init__(self, max_bombs, dimensions, possible_inventory_items):
-        self.dimensions = dimensions
+    def __init__(self, max_bombs: int, dimensions: int, possible_inventory_items: dict):
+        self.dimensions: int = dimensions
 
         if max_bombs <= dimensions * dimensions:
             tiles = [self.Tile(if_bomb=False,
@@ -14,19 +13,19 @@ class Field:
                     [self.Tile(if_bomb=True,
                                possible_inventory_items=possible_inventory_items) for _ in range(max_bombs)]
             random.shuffle(tiles)
-            self.field = [tiles[i:i+dimensions] for i in range(0, len(tiles), dimensions)]
+            self.field: list = [tiles[i:i+dimensions] for i in range(0, len(tiles), dimensions)]
         else:
-            self.field = [[self.Tile(if_bomb=True,
-                                     possible_inventory_items=possible_inventory_items)
-                           for _ in range(dimensions)] for _ in range(dimensions)]
+            self.field: list = [[self.Tile(if_bomb=True,
+                                 possible_inventory_items=possible_inventory_items)
+                                 for _ in range(dimensions)] for _ in range(dimensions)]
 
-        self.max_bombs = max_bombs
-        self.total_tiles = dimensions * dimensions
-        self.safe_tiles = self.total_tiles - max_bombs
-        self.opened_tiles = 0
+        self.max_bombs: int = max_bombs
+        self.total_tiles: int = dimensions * dimensions
+        self.safe_tiles: int = self.total_tiles - max_bombs
+        self.opened_tiles: int = 0
 
     def get(self):
-        changed_field = self.field
+        changed_field: list = self.field
         for y in range(self.dimensions):
             for x in range(self.dimensions):
                 if not changed_field[y][x].if_bomb:
@@ -44,19 +43,15 @@ class Field:
                         counted_bombs += 1
         return counted_bombs
 
-    def open_tile(self, x, y, draw_object, screen):
+    def open_tile(self, x: int, y: int, draw_object, screen):
         if not (0 <= x < self.dimensions and 0 <= y < self.dimensions):
             return  # the empty RETURN is a must here. It stops the execution of recursion.
         tile = self.field[y][x]
-        #if tile.if_open or tile.if_bomb:
         if tile.if_open:
             return
         tile.open_tile()
-        # beautifully updating display
-        #sleep(0.0000001)
         draw_object(screen)
         pygame.display.update()
-
         self.opened_tiles += 1
         if tile.is_totally_empty():  # checking and opening adjacent
             for i in range(-1, 2):
@@ -79,7 +74,7 @@ class Field:
         return str(self.field)
 
     class Tile:
-        def __init__(self, if_bomb, possible_inventory_items):
+        def __init__(self, if_bomb: bool, possible_inventory_items: dict):
             self.bombs_around = 0
             self.if_bomb = if_bomb
             self.bomb_string = '*B*'

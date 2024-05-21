@@ -1,5 +1,5 @@
 import random
-
+import sys
 import pygame
 from classes import Field
 
@@ -7,26 +7,25 @@ from classes import Field
 class Game:
     def __init__(self, bombs_perc: float, dimensions: int, cell_size_pix: int = 50):
         # PARAMS
-        self.cell_size = cell_size_pix
-        self.menu_height = 40
+        self.cell_size: int = cell_size_pix
+        self.menu_height: int = 40
 
-        self.dimensions = dimensions
-        self.max_bombs = int(self.dimensions * self.dimensions * bombs_perc)
+        self.dimensions: int = dimensions
+        self.max_bombs: int = int(self.dimensions * self.dimensions * bombs_perc)
 
-        self.window_height = self.dimensions * self.cell_size + self.menu_height
-        self.window_width = self.dimensions * self.cell_size
+        self.window_height: int = self.dimensions * self.cell_size + self.menu_height
+        self.window_width: int = self.dimensions * self.cell_size
         # COLORS
-        self.WHITE = (255, 255, 255)
-        self.GRAY = (192, 192, 192)
-        self.BLACK = (0, 0, 0)
-        self.DARK_GRAY = (60, 60, 60)
+        self.WHITE: tuple = (255, 255, 255)
+        self.GRAY: tuple = (192, 192, 192)
+        self.BLACK: tuple = (0, 0, 0)
+        self.DARK_GRAY: tuple = (60, 60, 60)
 
         # GAME FEATURES
         self.player_inventory, self.player_immortality = self.initiate_game_features()
-        #self.possible_inventory_items = {'Im': 0.01, 'Rn': 0.01}  # {item_name: probability}
-        self.possible_inventory_items = {'Im': ((self.dimensions * self.dimensions) - self.max_bombs) / 200 / 100,
-                                         'Rn': ((self.dimensions * self.dimensions) - self.max_bombs) / 100 / 100}  # {item_name: probability}
-
+        # {item_name: probability}
+        self.possible_inventory_items: dict = {'Im': bombs_perc / 5,
+                                               'Rn': bombs_perc}
         # GETTING THE FIELD
         self.field_object = None
         self.field = None
@@ -37,13 +36,13 @@ class Game:
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('SMK: Minesweeper')
         self.font = pygame.font.Font(None, 24)  # INIT THE FOND - AFTER PYGAME ITSELF
-        self.first_click = True
+        self.first_click: bool = True
         self.menu_text = self.change_menu_text()
 
         # BUTTON INIT (SIZE and POSITIONS)
         self.menu_button = pygame.Rect(10, 5, 100, 30)
         self.another_button = pygame.Rect(120, 5, 130, 30)
-        self.inventory_buttons = {}
+        self.inventory_buttons: dict = {}
         self.game_loop(self.screen)
 
     def initiate_game_features(self):
@@ -136,7 +135,7 @@ class Game:
         self.field = self.field_object.get()
         self.first_click = True
 
-    def draw_menu(self, screen, menu_text):
+    def draw_menu(self, screen, menu_text: str):
         # Draw the menu background
         pygame.draw.rect(screen, self.DARK_GRAY, [0, 0, self.window_width, self.menu_height])
 
@@ -149,24 +148,15 @@ class Game:
         text_rect = text.get_rect(center=button_rect.center)
         screen.blit(text, text_rect)
 
-        # Draw the Another button
-        button_rect = self.another_button
-        pygame.draw.rect(screen, self.GRAY, button_rect)
-
-        # Add text to the button
-        text = self.font.render("Another button", True, self.BLACK)
-        text_rect = text.get_rect(center=button_rect.center)
-        screen.blit(text, text_rect)
-
         # Add other text, e.g., number of mines
         mine_surf = self.font.render(menu_text, True, self.WHITE)
-        screen.blit(mine_surf, (260, 12))
+        screen.blit(mine_surf, (120, 12))
 
         # DRAWING INVENTORY ITEMS!!!!!!!
-        y_coord = 520
+        y_coord = 363
         for item, quantity in self.player_inventory.items():
             item_string = str(item) + f" x {str(quantity)}"
-            #adding their coords to the dict for functional reference in another func
+            # adding their coordinates to the dict for functional reference in another func
             self.inventory_buttons[item] = pygame.Rect(y_coord, 10, len(item_string) * 9, 20)
             pygame.draw.rect(screen, self.GRAY, self.inventory_buttons[item])
             text = self.font.render(item_string, True, self.BLACK)
@@ -174,7 +164,7 @@ class Game:
             screen.blit(text, text_rect)
             y_coord += (len(item) * 8) + 50
 
-    def change_menu_text(self, won=False, lost=False):
+    def change_menu_text(self, won: bool = False, lost: bool = False):
         if won:
             self.menu_text = f"Amazing job!"
         elif lost:
@@ -184,13 +174,13 @@ class Game:
 
         return self.menu_text
 
-    def check_if_we_click_on_a_bomb(self, x, y):
+    def check_if_we_click_on_a_bomb(self, x: int, y: int):
         if self.field[y][x].if_bomb:
             return True
         else:
             return False
 
-    def menu_button_clicks(self, pos):
+    def menu_button_clicks(self, pos: tuple):
         # checking if inventory was used
         for item, button_rect in self.inventory_buttons.items():
             if button_rect.collidepoint(pos):
@@ -203,11 +193,7 @@ class Game:
         # other buttons
         if self.menu_button.collidepoint(pos):
             print('Clicked New Game')
-            self.obtain_a_new_field()
-            self.change_menu_text()
-            self.initiate_game_features()
-        elif self.another_button.collidepoint(pos):
-            print('Another button')
+            self.open_settings_window()
         else:
             print('Missed all buttons')
 
@@ -219,17 +205,38 @@ class Game:
             else:
                 print('already in use')
                 return False
+
         elif item == list(self.possible_inventory_items.keys())[1]:  # rule for a random bomb
-            all_hidden_bombs = []
-            for row in self.field:
-                for tile in row:
+            all_hidden_bombs_with_open_adj_tiles = []
+            for ri, row in enumerate(self.field):
+                for ti, tile in enumerate(row):
                     if tile.if_bomb and not tile.if_open and not tile.is_flagged:
-                        all_hidden_bombs.append(tile)
-            if len(all_hidden_bombs) > 0:
-                random.choice(all_hidden_bombs).if_open = True
+                        adjacent_tiles = [
+                            (ri + i, ti + j)
+                            for i in range(-1, 2)
+                            for j in range(-1, 2)
+                            if 0 <= ri + i < self.dimensions and 0 <= ti + j < self.dimensions and (i != 0 or j != 0)
+                        ]
+                        if any(self.field[adj_ri][adj_ti].if_open for adj_ri, adj_ti in adjacent_tiles):
+                            all_hidden_bombs_with_open_adj_tiles.append(tile)
+
+            if len(all_hidden_bombs_with_open_adj_tiles) > 0:
+                random.choice(all_hidden_bombs_with_open_adj_tiles).if_open = True
                 return True
             else:
                 return False
+
+        #elif item == list(self.possible_inventory_items.keys())[1]:  # rule for a random bomb
+        #    all_hidden_bombs = []
+        #    for row in self.field:
+        #        for tile in row:
+        #            if tile.if_bomb and not tile.if_open and not tile.is_flagged:
+        #                all_hidden_bombs.append(tile)
+        #    if len(all_hidden_bombs) > 0:
+        #        random.choice(all_hidden_bombs).if_open = True
+        #        return True
+        #    else:
+        #        return False
 
         else:
             print('Wrong item')
@@ -238,10 +245,133 @@ class Game:
         self.field_object.open_all_tiles()
         self.change_menu_text(lost=True)
 
+    @staticmethod
+    def open_settings_window():
+        pygame.quit()
+        SettingsWindow()
+
+
+class SettingsWindow:
+    def __init__(self):
+        pygame.init()
+        self.window_width = 400
+        self.window_height = 300
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
+        pygame.display.set_caption('New Game Settings')
+        self.font = pygame.font.Font(None, 24)
+        self.input_boxes = []
+        self.user_input = {}
+        self.error_message = ""
+        self.init_ui()
+        self.run()
+
+    def init_ui(self):
+        self.screen.fill((255, 255, 255))
+
+        self.draw_label("Dimensions (5-50):", 50, 50)
+        self.dimensions_box = self.create_input_box(200, 50, "20", "dimensions")
+
+        self.draw_label("Bomb Percentage (0.1-0.9):", 50, 100)
+        self.bombs_perc_box = self.create_input_box(200, 100, "0.25", "bombs_perc")
+
+        self.draw_label("Tile size (px):", 50, 150)
+        self.cell_size_pix_box = self.create_input_box(200, 150, "25", "cell_size_pix")
+
+        self.start_button = pygame.Rect(150, 200, 100, 40)
+        pygame.draw.rect(self.screen, (192, 192, 192), self.start_button)
+
+        text = self.font.render("Start Game", True, (0, 0, 0))
+        text_rect = text.get_rect(center=self.start_button.center)
+        self.screen.blit(text, text_rect)
+        pygame.display.flip()
+
+    def create_input_box(self, x, y, default_text, key):
+        input_box = pygame.Rect(x, y, 140, 32)
+        self.input_boxes.append((input_box, default_text, key))
+        pygame.draw.rect(self.screen, (192, 192, 192), input_box)
+        text_surface = self.font.render(default_text, True, (0, 0, 0))
+        self.screen.blit(text_surface, (input_box.x+5, input_box.y+5))
+        self.user_input[key] = default_text
+        return input_box
+
+    def draw_label(self, text, x, y):
+        label = self.font.render(text, True, (0, 0, 0))
+        self.screen.blit(label, (x, y))
+
+    def display_error_message(self):
+        if self.error_message:
+            error_label = self.font.render(self.error_message, True, (255, 0, 0))
+            self.screen.blit(error_label, (50, 250))
+            pygame.display.flip()
+
+    def validate_input(self):
+        try:
+            dimensions = int(self.user_input["dimensions"])
+            bombs_perc = float(self.user_input["bombs_perc"])
+            cell_size_pix = int(self.user_input["cell_size_pix"])
+
+            if dimensions < 5 or dimensions > 50:
+                self.error_message = "Dimensions must be between 5 and 50."
+                return False
+            if bombs_perc < 0.1 or bombs_perc > 0.9:
+                self.error_message = "Bomb percentage must be between 0.1 and 0.9."
+                return False
+            if cell_size_pix < 10 or cell_size_pix > 100:
+                self.error_message = "Tile size must be between 10 and 100 px."
+                return False
+        except ValueError:
+            self.error_message = "Please enter valid numbers."
+            return False
+        return True
+
+    def run(self):
+        running = True
+        active_box = None
+        active_key = None
+
+        while running:
+            self.display_error_message()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.start_button.collidepoint(event.pos):
+                        if self.validate_input():
+                            dimensions = int(self.user_input["dimensions"])
+                            bombs_perc = float(self.user_input["bombs_perc"])
+                            cell_size_pix = int(self.user_input["cell_size_pix"])
+                            running = False
+                            self.close()
+                            Game(bombs_perc=bombs_perc, dimensions=dimensions, cell_size_pix=cell_size_pix)
+                        else:
+                            self.screen.fill((255, 255, 255))  # Clear the screen before re-drawing
+                            self.init_ui()
+                    for box, _, key in self.input_boxes:
+                        if box.collidepoint(event.pos):
+                            active_box = box
+                            active_key = key
+                elif event.type == pygame.KEYDOWN and active_box:
+                    if event.key == pygame.K_RETURN:
+                        active_box = None
+                        active_key = None
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.user_input[active_key] = self.user_input[active_key][:-1]
+                    else:
+                        self.user_input[active_key] += event.unicode
+                    pygame.draw.rect(self.screen, (192, 192, 192), active_box)
+                    text_surface = self.font.render(self.user_input[active_key], True, (0, 0, 0))
+                    self.screen.blit(text_surface, (active_box.x+5, active_box.y+5))
+                    pygame.display.flip()
+
+    def close(self):
+        pygame.display.quit()
+
 
 def main():
-    dim = 38
-    Game(bombs_perc=0.05, dimensions=dim, cell_size_pix=25)
+    #dim = 20
+    #Game(bombs_perc=0.2, dimensions=dim, cell_size_pix=25)
+    SettingsWindow()
 
 
 if __name__ == "__main__":
