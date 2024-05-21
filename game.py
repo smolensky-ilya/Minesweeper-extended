@@ -78,16 +78,16 @@ class Game:
                                 if not self.field[field_y][field_x].is_flagged:  # If not flagged - OPEN
                                     self.field_object.open_tile(x=field_x, y=field_y, draw_object=self.draw_the_field,
                                                                 screen=screen)
-                                if self.check_if_we_click_on_a_bomb(field_x, field_y):
-                                    if self.player_immortality:  # Handing immortality logic
-                                        self.player_immortality = False
-                                        self.field_object.open_tile(x=field_x, y=field_y,
-                                                                    draw_object=self.draw_the_field, screen=screen)
-                                    else:
-                                        self.game_over()
+                                    if self.check_if_we_click_on_a_bomb(field_x, field_y):
+                                        if self.player_immortality:  # Handing immortality logic
+                                            self.player_immortality = False
+                                            self.field_object.open_tile(x=field_x, y=field_y,
+                                                                        draw_object=self.draw_the_field, screen=screen)
+                                        else:
+                                            self.game_over()
 
-                                else:
-                                    self.change_menu_text()  # updating the number of remaining tiles to open
+                                    else:
+                                        self.change_menu_text()  # updating the number of remaining tiles to open
                                 self.first_click = False
                         elif event.button == 3:  # RIGHT MOUSE BUTTON
                             self.field[field_y][field_x].get_flagged()
