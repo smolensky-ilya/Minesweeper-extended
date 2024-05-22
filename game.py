@@ -25,7 +25,7 @@ class Game:
         self.player_inventory, self.player_immortality = self.initiate_game_features()
         # {item_name: probability}
         self.possible_inventory_items: dict = {'Im': bombs_perc / 5,
-                                               'Rn': bombs_perc}
+                                               'Rn': bombs_perc * 2}
         # GETTING THE FIELD
         self.field_object = None
         self.field = None
