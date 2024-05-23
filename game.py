@@ -11,7 +11,8 @@ class Game:
         self.menu_height: int = 40
 
         self.dimensions: int = dimensions
-        self.max_bombs: int = int(self.dimensions * self.dimensions * bombs_perc)
+        self.chosen_bomb_perc: float = bombs_perc
+        self.max_bombs: int = int(self.dimensions * self.dimensions * self.chosen_bomb_perc)
 
         self.window_height: int = self.dimensions * self.cell_size + self.menu_height
         self.window_width: int = self.dimensions * self.cell_size
@@ -225,19 +226,6 @@ class Game:
                 return True
             else:
                 return False
-
-        #elif item == list(self.possible_inventory_items.keys())[1]:  # rule for a random bomb
-        #    all_hidden_bombs = []
-        #    for row in self.field:
-        #        for tile in row:
-        #            if tile.if_bomb and not tile.if_open and not tile.is_flagged:
-        #                all_hidden_bombs.append(tile)
-        #    if len(all_hidden_bombs) > 0:
-        #        random.choice(all_hidden_bombs).if_open = True
-        #        return True
-        #    else:
-        #        return False
-
         else:
             print('Wrong item')
 
@@ -245,14 +233,25 @@ class Game:
         self.field_object.open_all_tiles()
         self.change_menu_text(lost=True)
 
-    @staticmethod
-    def open_settings_window():
+    def open_settings_window(self):
         pygame.quit()
-        SettingsWindow()
+        SettingsWindow(dimensions=self.dimensions, bomb_perc=self.chosen_bomb_perc, tile_size=self.cell_size)
 
 
 class SettingsWindow:
-    def __init__(self):
+    def __init__(self, dimensions: int = None, bomb_perc: float = None, tile_size: int = None):
+        # PARAMS
+        self.dimensions_def: int = dimensions if dimensions is not None else 20
+        self.bomb_perc_def: float = bomb_perc if bomb_perc is not None else 0.25
+        self.tile_size_def: int = tile_size if tile_size is not None else 25
+
+        # UI elements
+        self.dimensions_box = None
+        self.bombs_perc_box = None
+        self.cell_size_pix_box = None
+        self.start_button = None
+
+        # INIT
         pygame.init()
         self.window_width = 400
         self.window_height = 300
@@ -269,13 +268,13 @@ class SettingsWindow:
         self.screen.fill((255, 255, 255))
 
         self.draw_label("Dimensions (5-50):", 50, 50)
-        self.dimensions_box = self.create_input_box(200, 50, "20", "dimensions")
+        self.dimensions_box = self.create_input_box(200, 50, f"{self.dimensions_def}", "dimensions")
 
         self.draw_label("Bomb Percentage (0.1-0.9):", 50, 100)
-        self.bombs_perc_box = self.create_input_box(200, 100, "0.25", "bombs_perc")
+        self.bombs_perc_box = self.create_input_box(200, 100, f"{self.bomb_perc_def}", "bombs_perc")
 
         self.draw_label("Tile size (px):", 50, 150)
-        self.cell_size_pix_box = self.create_input_box(200, 150, "25", "cell_size_pix")
+        self.cell_size_pix_box = self.create_input_box(200, 150, f"{self.tile_size_def}", "cell_size_pix")
 
         self.start_button = pygame.Rect(150, 200, 100, 40)
         pygame.draw.rect(self.screen, (192, 192, 192), self.start_button)
@@ -364,13 +363,12 @@ class SettingsWindow:
                     self.screen.blit(text_surface, (active_box.x+5, active_box.y+5))
                     pygame.display.flip()
 
-    def close(self):
+    @staticmethod
+    def close():
         pygame.display.quit()
 
 
 def main():
-    #dim = 20
-    #Game(bombs_perc=0.2, dimensions=dim, cell_size_pix=25)
     SettingsWindow()
 
 
