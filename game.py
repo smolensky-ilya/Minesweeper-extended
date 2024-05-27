@@ -254,7 +254,7 @@ class SettingsWindow:
         # INIT
         pygame.init()
         self.window_width = 400
-        self.window_height = 300
+        self.window_height = 370
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('New Game Settings')
         self.font = pygame.font.Font(None, 24)
@@ -276,7 +276,11 @@ class SettingsWindow:
         self.draw_label("Tile size (px):", 50, 150)
         self.cell_size_pix_box = self.create_input_box(200, 150, f"{self.tile_size_def}", "cell_size_pix")
 
-        self.start_button = pygame.Rect(150, 200, 100, 40)
+        self.draw_label("Additional features: ", 50, 200)
+        self.draw_label("Rb - make a random close bomb explode; ", 50, 220)
+        self.draw_label("Im - activates immortality; ", 50, 240)
+
+        self.start_button = pygame.Rect(150, 280, 100, 40)
         pygame.draw.rect(self.screen, (192, 192, 192), self.start_button)
 
         text = self.font.render("Start Game", True, (0, 0, 0))
