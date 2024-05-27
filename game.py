@@ -256,7 +256,7 @@ class SettingsWindow:
         self.window_width = 400
         self.window_height = 370
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
-        pygame.display.set_caption('New Game Settings')
+        pygame.display.set_caption('SMK: Minesweeper - New Game Settings')
         self.font = pygame.font.Font(None, 24)
         self.input_boxes = []
         self.user_input = {}
@@ -270,7 +270,7 @@ class SettingsWindow:
         self.draw_label("Dimensions (5-50):", 50, 50)
         self.dimensions_box = self.create_input_box(200, 50, f"{self.dimensions_def}", "dimensions")
 
-        self.draw_label("Bomb Percentage (0.1-0.9):", 50, 100)
+        self.draw_label("Bomb Percentage:", 50, 100)
         self.bombs_perc_box = self.create_input_box(200, 100, f"{self.bomb_perc_def}", "bombs_perc")
 
         self.draw_label("Tile size (px):", 50, 150)
