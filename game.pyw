@@ -66,11 +66,12 @@ class Game:
                         if event.button == 1:  # LEFT MOUSE BUTTON
                             if self.field[field_y][field_x].if_open:  # IF THE TILE IS ALREADY OPEN
                                 if self.field[field_y][field_x].item is not None:  # checking if there is an item
-                                    if self.field[field_y][field_x].item not in self.player_inventory.keys():
-                                        self.player_inventory[self.field[field_y][field_x].item] = 1
-                                    else:
-                                        self.player_inventory[self.field[field_y][field_x].item] += 1
-                                    self.field[field_y][field_x].item_taken = True
+                                    if not self.field[field_y][field_x].item_taken:  # checking if it hasn't been taken
+                                        if self.field[field_y][field_x].item not in self.player_inventory.keys():
+                                            self.player_inventory[self.field[field_y][field_x].item] = 1
+                                        else:
+                                            self.player_inventory[self.field[field_y][field_x].item] += 1
+                                        self.field[field_y][field_x].item_taken = True
                             else:
                                 # Saving ourselves on the first click - it will recreate the field until safe.
                                 while self.first_click and self.field[field_y][field_x].if_bomb:
